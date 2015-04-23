@@ -1,0 +1,299 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>example1</title><meta name="generator" content="MATLAB 8.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-02-24"><meta name="DC.source" content="example1.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">data systems</a></li><li><a href="#3">building reduced model</a></li><li><a href="#4">retrieving comparison data</a></li><li><a href="#5">plotting results</a></li></ul></div><pre class="codeinput">clear <span class="string">all</span>
+close <span class="string">all</span>
+clc
+</pre><h2>data systems<a name="2"></a></h2><pre class="codeinput">load(<span class="string">'new_data.mat'</span>);
+T=100;
+n = max(size(A)); <span class="comment">% original system dimension = 1006</span>
+v = max(size(S)); <span class="comment">% reduced model dimension = 18</span>
+omega=logspace(-2,4,40000);
+sys = ss(A,B,C,D);
+sig_gen = ss(S,[],L,0);
+</pre><h2>building reduced model<a name="3"></a></h2><pre class="codeinput">Left= kron(eye(v),A)-kron(S',eye(n));
+Right=reshape(-B*L,n*v,1);
+PI=reshape(Left\Right,n,v);
+eigen = eig(A);
+[~,ind] = sort(abs(imag(eigen)),<span class="string">'descend'</span>);
+eig_des = eigen(ind(1:v));
+delta = place(S',L',eig_des)';
+F = S - delta*L;
+G = delta;
+H = C*PI;
+red_mod = ss(F,G,H,0);
+</pre><pre class="codeoutput">Warning: Achieved pole locations differ by more than 10 percent from specified
+locations. 
+</pre><h2>retrieving comparison data<a name="4"></a></h2><pre class="codeinput">[wn,~] = damp(sig_gen);
+
+abs_fre = abs(freqresp(sys,wn));
+
+db = mag2db(abs_fre);
+
+[mag_sys,phase_sys]=bode(sys,omega);
+
+int_sys = ss([],[],[],0);
+
+int_sys.a = [sig_gen.a, zeros(v,n);
+          sys.b*sig_gen.c, sys.a];
+int_sys.c = [zeros(1,v), sys.c];
+
+[y_sys,t_sys,~] = initial(int_sys, [w0; x0], T);
+
+[mag_red_mod,phase_red_mod] = bode(red_mod,omega);
+
+int_red_mod = ss([],[],[],0);
+
+int_red_mod.a = [sig_gen.a, zeros(v,v);
+              red_mod.b*sig_gen.c, red_mod.a];
+int_red_mod.c = [zeros(1,v), red_mod.c];
+
+err = abs(mag_sys - mag_red_mod);
+
+error_db = mag2db(err);
+
+error_phase = phase_sys - phase_red_mod;
+
+xi0 = zeros(v,1);
+
+[y_red_mod,t_red_mod,~]=initial(int_red_mod, [w0; xi0], T);
+</pre><h2>plotting results<a name="5"></a></h2><pre class="codeinput">figure(1)
+semilogx(omega,mag2db(mag_sys(1,:)));
+hold <span class="string">on</span>;
+semilogx(omega,mag2db(mag_red_mod(1,:)),<span class="string">'r--'</span>);
+plot(wn(:,1),db(1,:),<span class="string">'rs'</span>,<span class="string">'LineWidth'</span>,1.5)
+grid <span class="string">on</span>;
+legend(<span class="string">'system'</span>,<span class="string">'reduced model'</span>,<span class="string">'moments'</span>)
+ylabel(<span class="string">'Magnitude (dB)'</span>)
+title(<span class="string">'Bode diagram'</span>)
+
+figure(2)
+semilogx(omega,phase_sys(1,:));
+hold <span class="string">on</span>;
+semilogx(omega,phase_red_mod(1,:),<span class="string">'r--'</span>);
+grid <span class="string">on</span>;
+legend(<span class="string">'system'</span>,<span class="string">'reduced model'</span>)
+ylabel(<span class="string">'phase (deg)'</span>)
+xlabel(<span class="string">'Frequency (rad/s)'</span>)
+
+figure(3)
+plot(t_sys,y_sys);
+hold <span class="string">on</span>;
+plot(t_red_mod,y_red_mod,<span class="string">'r--'</span>);
+grid <span class="string">on</span>;
+legend(<span class="string">'system'</span>,<span class="string">'reduced model'</span>)
+xlim([0, T]);
+title(<span class="string">'Outputs'</span>)
+
+figure(4)
+T = unique([t_sys; t_red_mod]);
+y_sys_interp =interp1(t_sys, y_sys, T);
+y_red_mod_interp =interp1(t_red_mod, y_red_mod, T);
+sim_err = plot(T, abs(y_sys_interp - y_red_mod_interp),<span class="string">'r'</span>);
+hold <span class="string">on</span>;
+grid <span class="string">on</span>;
+xlabel(<span class="string">'Time (sec)'</span>);
+ylabel(<span class="string">'Absolute error'</span>)
+title(<span class="string">'Output error'</span>)
+
+figure(5)
+semilogx(omega,error_db(1,:),<span class="string">'r'</span>)
+hold <span class="string">on</span>;
+grid <span class="string">on</span>;
+title(<span class="string">'Plot Bode error'</span>)
+ylabel(<span class="string">'Magnitude error (dB)'</span>)
+
+figure(6)
+semilogx(omega,error_phase(1,:),<span class="string">'r'</span>)
+hold <span class="string">on</span>;
+grid <span class="string">on</span>;
+ylabel(<span class="string">'Phase error'</span>)
+xlabel(<span class="string">'Frequency (rad/s)'</span>);
+</pre><img vspace="5" hspace="5" src="example1_01.png" alt=""> <img vspace="5" hspace="5" src="example1_02.png" alt=""> <img vspace="5" hspace="5" src="example1_03.png" alt=""> <img vspace="5" hspace="5" src="example1_04.png" alt=""> <img vspace="5" hspace="5" src="example1_05.png" alt=""> <img vspace="5" hspace="5" src="example1_06.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clear all
+close all
+clc
+
+%% data systems
+
+load('new_data.mat');
+T=100;
+n = max(size(A)); % original system dimension = 1006
+v = max(size(S)); % reduced model dimension = 18
+omega=logspace(-2,4,40000);
+sys = ss(A,B,C,D);
+sig_gen = ss(S,[],L,0);
+
+%% building reduced model
+
+Left= kron(eye(v),A)-kron(S',eye(n));
+Right=reshape(-B*L,n*v,1);
+PI=reshape(Left\Right,n,v);
+eigen = eig(A);       
+[~,ind] = sort(abs(imag(eigen)),'descend');       
+eig_des = eigen(ind(1:v));
+delta = place(S',L',eig_des)';
+F = S - delta*L;
+G = delta;
+H = C*PI;
+red_mod = ss(F,G,H,0);
+
+%% retrieving comparison data
+
+[wn,~] = damp(sig_gen);
+
+abs_fre = abs(freqresp(sys,wn));
+
+db = mag2db(abs_fre);
+
+[mag_sys,phase_sys]=bode(sys,omega);
+
+int_sys = ss([],[],[],0);
+
+int_sys.a = [sig_gen.a, zeros(v,n);
+          sys.b*sig_gen.c, sys.a];
+int_sys.c = [zeros(1,v), sys.c];
+
+[y_sys,t_sys,~] = initial(int_sys, [w0; x0], T);
+
+[mag_red_mod,phase_red_mod] = bode(red_mod,omega);
+
+int_red_mod = ss([],[],[],0);
+
+int_red_mod.a = [sig_gen.a, zeros(v,v);
+              red_mod.b*sig_gen.c, red_mod.a];
+int_red_mod.c = [zeros(1,v), red_mod.c];
+
+err = abs(mag_sys - mag_red_mod);
+
+error_db = mag2db(err);
+
+error_phase = phase_sys - phase_red_mod;
+
+xi0 = zeros(v,1);
+
+[y_red_mod,t_red_mod,~]=initial(int_red_mod, [w0; xi0], T);
+
+%% plotting results
+
+figure(1)
+semilogx(omega,mag2db(mag_sys(1,:)));
+hold on;
+semilogx(omega,mag2db(mag_red_mod(1,:)),'rREPLACE_WITH_DASH_DASH');
+plot(wn(:,1),db(1,:),'rs','LineWidth',1.5)
+grid on;
+legend('system','reduced model','moments')
+ylabel('Magnitude (dB)')
+title('Bode diagram')
+
+figure(2)
+semilogx(omega,phase_sys(1,:));
+hold on;
+semilogx(omega,phase_red_mod(1,:),'rREPLACE_WITH_DASH_DASH');
+grid on;
+legend('system','reduced model')
+ylabel('phase (deg)')
+xlabel('Frequency (rad/s)')
+
+figure(3)
+plot(t_sys,y_sys);
+hold on;
+plot(t_red_mod,y_red_mod,'rREPLACE_WITH_DASH_DASH');
+grid on;
+legend('system','reduced model')
+xlim([0, T]);
+title('Outputs')
+
+figure(4)
+T = unique([t_sys; t_red_mod]);
+y_sys_interp =interp1(t_sys, y_sys, T);
+y_red_mod_interp =interp1(t_red_mod, y_red_mod, T);
+sim_err = plot(T, abs(y_sys_interp - y_red_mod_interp),'r');
+hold on;
+grid on;
+xlabel('Time (sec)');
+ylabel('Absolute error')
+title('Output error')
+
+figure(5)
+semilogx(omega,error_db(1,:),'r')
+hold on;
+grid on;
+title('Plot Bode error')
+ylabel('Magnitude error (dB)')
+
+figure(6)
+semilogx(omega,error_phase(1,:),'r')
+hold on;
+grid on;
+ylabel('Phase error')
+xlabel('Frequency (rad/s)');
+
+##### SOURCE END #####
+--></body></html>
